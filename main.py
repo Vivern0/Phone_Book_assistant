@@ -16,11 +16,11 @@ class Name(Field):
 
 class Phone(Field):
     def __init__(self, value):
-        super().__init__(value)
-
         if not all([len(self.value) == 10,
                     self.value.isdecimal()]):
             raise ValueError
+
+        super().__init__(value)
 
 
 class Record:
