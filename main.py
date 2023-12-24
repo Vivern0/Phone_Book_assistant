@@ -4,67 +4,45 @@ from datetime import datetime
 
 class Field:
     def __init__(self, value):
-        self._value = value
+        if self.validate(value):
+            self.__value = value
+
+    def validate(slef, new_value):
+        return True
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, new_value):
+        if self.validate(new_value):
+            self.__value = new_value
 
     def __str__(self):
-        return str(self._value)
+        return str(self.__value)
 
 
 class Name(Field):
-    def __init__(self, value):
-        super().__init__(value)
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, new_name):
-        self._value = new_name
+    pass
 
 
 class Birthday(Field):
-    def __init__(self, value):
-        if value is None:
-            self._value = None
-        else:
-            if not all([len(value) == 10,
-                        isinstance(value, str)]):
-                raise ValueError('Wrong date format, should be dd.mm.yyyy')
-            self._value = datetime.strptime(value, '%d.%m.%Y').date()
-
-        super().__init__(self.value)
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, new_birth):
-        if not all([len(new_birth) == 10,
-                    isinstance(new_birth, str)]):
+    def validate(slef, new_birth):
+        if new_birth is None:
+            return True
+        elif not all([len(new_birth) == 10,
+                      isinstance(new_birth, str)]):
             raise ValueError('Wrong date format, should be dd.mm.yyyy')
-        self._value = datetime.strptime(new_birth, '%d.%m.%Y').date()
+        return True
 
 
 class Phone(Field):
-    def __init__(self, value):
-        if not all([len(value) == 10,
-                    value.isdecimal()]):
-            raise ValueError('Wrong phone number format, should be 10 digits')
-
-        super().__init__(value)
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, new_phone):
+    def validate(slef, new_phone):
         if not all([len(new_phone) == 10,
                     new_phone.isdecimal()]):
             raise ValueError('Wrong phone number format, should be 10 digits')
-        self._value = new_phone
+        return True
 
 
 class Record:
@@ -102,8 +80,13 @@ class Record:
     def days_to_birthday(self):
         if self.birthday.value is not None:
             cur_date = datetime.now().date()
-            next_birth = self.birthday.value.replace(year=cur_date.year)
-            if self.birthday.value < cur_date:
+            try:
+                cur_birthday = datetime.strptime(self.birthday.value,
+                                                 '%d.%m.%Y').date()
+            except ValueError('Wrong date format, should be dd.mm.yyyy'):
+                return None
+            next_birth = cur_birthday.replace(year=cur_date.year)
+            if next_birth < cur_date:
                 next_birth = next_birth.replace(year=cur_date.year + 1)
             return (next_birth - cur_date).days
         return None
@@ -114,8 +97,8 @@ class Record:
                     f"phones: {', '.join(p.value for p in self.phones)}."
 
         return f"Contact name: {self.name.value}; " \
-                f"phones: {', '.join(p.value for p in self.phones)}; " \
-                f"birthday: {self.birthday.value}."
+               f"phones: {', '.join(p.value for p in self.phones)}; " \
+               f"birthday: {self.birthday.value}."
 
 
 class AddressBook(UserDict):
@@ -164,26 +147,26 @@ if __name__ == '__main__':
     # Виведення всіх записів у книзі
     for record in book.data.values():
         print(record)
-    print('-'*30)
+    print('-'*50)
 
     # Знаходження та редагування телефону для John
     john = book.find("John")
     john.edit_phone("1234567890", "1112223333")
 
     print(john)  # Виведення: Contact name: John, phones: 1112223333; 555555555
-    print('-'*30)
+    print('-'*50)
 
     # Пошук конкретного телефону у записі John
     found_phone = john.find_phone("5555555555")
     print(f"{john.name}: {found_phone}")  # Виведення: John: 5555555555
-    print('-'*30)
+    print('-'*50)
 
     # Видалення запису Jane
     book.delete("Jane")
 
     for record in book.data.values():
         print(record)
-    print('-'*30)
+    print('-'*50)
 
     # Виведення днів до наступного дня народження John
     print(john_record.days_to_birthday())
@@ -194,7 +177,7 @@ if __name__ == '__main__':
 
     # Виведення днів до наступного дня народження John
     print(john_record.days_to_birthday())
-    print('-'*30)
+    print('-'*50)
 
     # Додавання 10 нових записів для тесту ітератора AddressBook
     rec_1 = Record("Name1", "1234567890", birthday="01.01.2000")
